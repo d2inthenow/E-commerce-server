@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import helmet from "helmet";
 import connectDB from "./config/connectDB.js";
+// Import routes
+import userRouter from "./route/user.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -18,7 +20,7 @@ app.use(cookieParser());
 app.use(morgan("dev")); // Log HTTP requests in development mode
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disable CSP for simplicity, adjust as needed
+    crossOriginResourcePolicy: false, // Disable cross-origin resource policy
   })
 );
 
@@ -28,6 +30,9 @@ app.get("/", (req, res) => {
     message: "Server is running on port" + PORT,
   });
 });
+
+// Use routes
+app.use("/api/user", userRouter);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
