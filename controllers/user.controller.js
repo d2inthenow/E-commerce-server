@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import sendEmailFun from "../config/sendEmail.js";
 import VerificationEmail from "../utils/verifyEmail.js";
+import generateAccessToken from "../utils/generatedAccessToken.js";
+import generateRefreshToken from "../utils/generatedRefreshToken.js";
 
 export const registerUserController = async (req, res) => {
   try {
@@ -69,6 +71,7 @@ export const registerUserController = async (req, res) => {
     });
   }
 };
+
 export const verifyEmailController = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -108,6 +111,126 @@ export const verifyEmailController = async (req, res) => {
         success: false,
       });
     }
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
+
+export const loginUserController = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Please provide email and password",
+        error: true,
+        success: false,
+      });
+    }
+
+    const user = await UserModel.findOne({ email: email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+        error: true,
+        success: false,
+      });
+    }
+
+    if (user.status !== "Active") {
+      return res.status(403).json({
+        message: "Your account is not active. Please contact support.",
+        error: true,
+        success: false,
+      });
+    }
+    if (user.status === "Banned") {
+      return res.status(403).json({
+        message: "Your account has been suspended. Please contact support.",
+        error: true,
+        success: false,
+      });
+    }
+
+    if (!user.verify_email) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in",
+        error: true,
+        success: false,
+      });
+    }
+
+    const checkPassword = await bcrypt.compare(password, user.password);
+
+    if (!checkPassword) {
+      return res.status(400).json({
+        message: "Invalid password",
+        error: true,
+        success: false,
+      });
+    }
+
+    // Generate JWT token
+    const accesstoken = await generateAccessToken(user._id);
+    const refreshtoken = await generateRefreshToken(user._id);
+
+    // Update last login date
+    const updateUser = await UserModel.findByIdAndUpdate(user._id, {
+      last_login_date: new Date(),
+    });
+
+    const cookiesOption = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 1 * 60 * 60 * 1000,
+    };
+    res.cookie("accesstoken", accesstoken, cookiesOption);
+    res.cookie("refreshtoken", refreshtoken, cookiesOption);
+
+    return res.status(200).json({
+      success: true,
+      error: false,
+      message: "Login successful",
+      data: {
+        accesstoken,
+        refreshtoken,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
+  }
+};
+
+export const logoutUserController = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const cookiesOption = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: 0,
+    };
+    res.clearCookie("accesstoken", "", cookiesOption);
+    res.clearCookie("refreshtoken", "", cookiesOption);
+
+    const removeRefreshToken = await UserModel.updateOne(userId, {
+      refresh_token: "",
+    });
+    return res.status(200).json({
+      message: "Logout successful",
+      error: false,
+      success: true,
+    });
   } catch (error) {
     return res.status(500).json({
       message: error.message || error,
