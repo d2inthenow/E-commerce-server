@@ -16,6 +16,13 @@ const auth = async (req, res, next) => {
       token,
       process.env.SECRET_KEY_ACCESS_TOKEN
     );
+    if (!decoded) {
+      return res.status(401).json({
+        message: "Unauthorized access, invalid token",
+        error: true,
+        success: false,
+      });
+    }
     req.userId = decoded.id;
     next();
   } catch (error) {

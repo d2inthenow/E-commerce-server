@@ -223,9 +223,12 @@ export const logoutUserController = async (req, res) => {
     res.clearCookie("accesstoken", "", cookiesOption);
     res.clearCookie("refreshtoken", "", cookiesOption);
 
-    const removeRefreshToken = await UserModel.updateOne(userId, {
-      refresh_token: "",
-    });
+    await UserModel.updateOne(
+      { _id: req.userId },
+      {
+        refresh_token: "",
+      }
+    );
     return res.status(200).json({
       message: "Logout successful",
       error: false,
