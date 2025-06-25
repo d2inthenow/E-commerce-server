@@ -7,7 +7,6 @@ import generateAccessToken from "../utils/generatedAccessToken.js";
 import generateRefreshToken from "../utils/generatedRefreshToken.js";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import exp from "constants";
 
 // Configuration cloudinary
 cloudinary.config({
@@ -296,7 +295,7 @@ export const userAvatarController = async (req, res) => {
     const uploadOptions = {
       use_filename: true,
       unique_filename: false,
-      overwrite: true,
+      overwrite: false,
     };
 
     const uploadResult = await cloudinary.uploader.upload(
