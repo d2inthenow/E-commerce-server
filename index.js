@@ -9,6 +9,7 @@ import connectDB from "./config/connectDB.js";
 // Import routes
 import userRouter from "./route/user.route.js";
 import categoryRouter from "./route/category.route.js";
+import productRouter from "./route/product.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -35,7 +36,7 @@ app.get("/", (req, res) => {
 //Routes
 app.use("/api/user", userRouter);
 app.use("/api/category", categoryRouter);
-
+app.use("/api/product", productRouter);
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
