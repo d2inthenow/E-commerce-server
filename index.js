@@ -16,7 +16,13 @@ import myListRouter from "./route/mylist.route.js";
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true, // Cho phép gửi cookie, headers như Authorization
+  })
+);
+
 app.options("*", cors()); // Enable pre-flight requests for all routes
 
 app.use(express.json());

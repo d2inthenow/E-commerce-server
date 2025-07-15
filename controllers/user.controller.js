@@ -96,7 +96,7 @@ export const verifyEmailController = async (req, res) => {
 
     const isCodeValid = user.otp === otp;
     const isCodeExpired = user.otp_expiry < Date.now();
-    if (isCodeValid && isCodeExpired) {
+    if (isCodeValid && !isCodeExpired) {
       user.verify_email = true;
       user.otp = null; // Clear the OTP after successful verification
       user.otp_expiry = null; // Clear the OTP expiry date
@@ -116,6 +116,12 @@ export const verifyEmailController = async (req, res) => {
     } else if (isCodeExpired) {
       return res.status(400).json({
         message: "Verification code has expired",
+        error: true,
+        success: false,
+      });
+    } else {
+      return res.status(400).json({
+        message: "Invalid OTP or expired",
         error: true,
         success: false,
       });
